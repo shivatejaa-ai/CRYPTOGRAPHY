@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Cryptography Secure Lab</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+canvas{
+position:fixed;
+top:0;
+left:0;
+z-index:-1;
+}
+
+#loginPage{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.loginBox{
+background:rgba(0,0,0,0.85);
+padding:35px;
+border-radius:10px;
+color:white;
+width:300px;
+}
+
+.loginBox input{
+width:100%;
+padding:10px;
+margin:8px 0;
+}
+
+.loginBox button{
+width:100%;
+padding:10px;
+background:#00ffc3;
+border:none;
+cursor:pointer;
+}
+
+#app{
+display:none;
+}
+
+.sidebar{
+position:fixed;
+left:0;
+top:0;
+height:100%;
+width:220px;
+background:#111;
+padding-top:20px;
+}
+
+.sidebar h2{
+color:#00ffc3;
+text-align:center;
+margin-bottom:20px;
+}
+
+.sidebar button{
+width:100%;
+padding:14px;
+border:none;
+background:none;
+color:white;
+cursor:pointer;
+text-align:left;
+}
+
+.sidebar button:hover{
+background:#00ffc3;
+color:black;
+}
+
+.content{
+margin-left:220px;
+padding:30px;
+color:white;
+}
+
+.section{
+display:none;
+background:rgba(0,0,0,0.75);
+padding:20px;
+border-radius:10px;
+}
+
+.section.active{
+display:block;
+}
+
+input{
+padding:8px;
+margin:6px;
+}
+
+button.action{
+background:#00ffc3;
+border:none;
+padding:8px 12px;
+cursor:pointer;
+}
+
+.visual{
+margin-top:10px;
+background:#222;
+padding:10px;
+min-height:60px;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div id="loginPage">
+<div class="loginBox">
+<h2>Crypto Login</h2>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+<p id="msg"></p>
+</div>
+</div>
+
+<div id="app">
+
+<div class="sidebar">
+<h2>Crypto Lab</h2>
+<button onclick="show('caesar')">Caesar Cipher</button>
+<button onclick="show('rail')">Rail Fence</button>
+<button onclick="show('diffie')">Diffie Hellman</button>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="content">
+
+<div id="caesar" class="section active">
+<h2>Caesar Cipher</h2>
+<input id="cText" placeholder="Enter message">
+<input id="shift" placeholder="Shift value">
+<button class="action" onclick="caesar()">Run Cipher</button>
+<div class="visual" id="cResult"></div>
+</div>
+
+<div id="rail" class="section">
+<h2>Rail Fence Cipher</h2>
+<input id="rText" placeholder="Enter message">
+<input id="rails" placeholder="Rails">
+<button class="action" onclick="rail()">Run Cipher</button>
+<div class="visual" id="railResult"></div>
+<div class="visual" id="railVisual"></div>
+</div>
+
+<div id="diffie" class="section">
+<h2>Diffie Hellman Key Exchange</h2>
+<input id="p" placeholder="Prime p">
+<input id="g" placeholder="Base g">
+<input id="a" placeholder="Private key A">
+<input id="b" placeholder="Private key B">
+<button class="action" onclick="diffie()">Generate</button>
+<div class="visual" id="dResult"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+
+/* PRIME CHECK */
+
+function isPrime(n){
+if(n<=1) return false;
+for(let i=2;i<=Math.sqrt(n);i++){
+if(n%i===0) return false;
+}
+return true;
+}
+
+/* LOGIN */
+
+function register(){
+localStorage.setItem("user",username.value)
+localStorage.setItem("pass",password.value)
+msg.innerHTML="User registered"
+}
+
+function login(){
+if(username.value===localStorage.getItem("user") &&
+password.value===localStorage.getItem("pass")){
+loginPage.style.display="none"
+app.style.display="block"
+}else{
+msg.innerHTML="Invalid login"
+}
+}
+
+function logout(){
+location.reload()
+}
+
+/* NAV */
+
+function show(id){
+document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"))
+document.getElementById(id).classList.add("active")
+}
+
+/* CAESAR */
+
+function caesar(){
+
+let text = cText.value
+let shift = parseInt(shiftInput = document.getElementById("shift").value)
+
+if(!text){
+alert("Enter message")
+return
+}
+
+if(isNaN(shift)){
+alert("Shift must be number")
+return
+}
+
+let enc="", dec="", steps=""
+
+for(let i=0;i<text.length;i++){
+
+let ch=text[i]
+let code=ch.charCodeAt(0)
+
+if(code>=97 && code<=122){
+let e=String.fromCharCode((code-97+shift)%26+97)
+let d=String.fromCharCode((code-97-shift+26)%26+97)
+enc+=e; dec+=d; steps+=ch+" → "+e+"<br>"
+}
+else if(code>=65 && code<=90){
+let e=String.fromCharCode((code-65+shift)%26+65)
+let d=String.fromCharCode((code-65-shift+26)%26+65)
+enc+=e; dec+=d; steps+=ch+" → "+e+"<br>"
+}
+else{
+enc+=ch; dec+=ch
+}
+
+}
+
+cResult.innerHTML=
+"<b>Encrypted:</b> "+enc+
+"<br><b>Decrypted:</b> "+dec+
+"<br><b>Steps:</b><br>"+steps
+
+}
+
+/* RAIL FENCE */
+
+function rail(){
+
+let text=rText.value
+let rails=parseInt(document.getElementById("rails").value)
+
+if(!text){
+alert("Enter message")
+return
+}
+
+if(isNaN(rails) || rails<=1){
+alert("Rails must be > 1")
+return
+}
+
+let rail=[]
+
+for(let i=0;i<rails;i++) rail[i]=[]
+
+let row=0, dir=1
+
+for(let i=0;i<text.length;i++){
+rail[row][i]=text[i]
+if(row==0) dir=1
+if(row==rails-1) dir=-1
+row+=dir
+}
+
+let enc=""
+
+for(let r=0;r<rails;r++)
+for(let c=0;c<text.length;c++)
+if(rail[r][c]) enc+=rail[r][c]
+
+let visual=""
+
+for(let r=0;r<rails;r++){
+for(let c=0;c<text.length;c++){
+visual+=rail[r][c]?rail[r][c]:" . "
+}
+visual+="<br>"
+}
+
+railResult.innerHTML="<b>Encrypted:</b> "+enc
+railVisual.innerHTML=visual
+
+}
+
+/* DIFFIE HELLMAN */
+
+function diffie(){
+
+let p=parseInt(document.getElementById("p").value)
+let g=parseInt(document.getElementById("g").value)
+let a=parseInt(document.getElementById("a").value)
+let b=parseInt(document.getElementById("b").value)
+
+if(isNaN(p)||isNaN(g)||isNaN(a)||isNaN(b)){
+alert("All inputs must be numbers")
+return
+}
+
+if(!isPrime(p)){
+alert("p must be PRIME number")
+return
+}
+
+let A=(g**a)%p
+let B=(g**b)%p
+
+let keyA=(B**a)%p
+let keyB=(A**b)%p
+
+dResult.innerHTML=
+"Public A: "+A+"<br>"+
+"Public B: "+B+"<br>"+
+"Shared Key A: "+keyA+"<br>"+
+"Shared Key B: "+keyB
+
+}
+
+/* MATRIX */
+
+let canvas=document.getElementById("matrix")
+let ctx=canvas.getContext("2d")
+
+canvas.height=window.innerHeight
+canvas.width=window.innerWidth
+
+let letters="01".split("")
+let font=14
+let columns=canvas.width/font
+let drops=[]
+
+for(let i=0;i<columns;i++) drops[i]=1
+
+function draw(){
+
+ctx.fillStyle="rgba(0,0,0,0.05)"
+ctx.fillRect(0,0,canvas.width,canvas.height)
+
+ctx.fillStyle="#0f0"
+ctx.font=font+"px monospace"
+
+for(let i=0;i<drops.length;i++){
+
+let text=letters[Math.floor(Math.random()*letters.length)]
+ctx.fillText(text,i*font,drops[i]*font)
+
+if(drops[i]*font>canvas.height && Math.random()>0.975)
+drops[i]=0
+
+drops[i]++
+
+}
+
+}
+
+setInterval(draw,33)
+
+</script>
+
+</body>
+</html>
